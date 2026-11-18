@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>The Intelligent Value Chain</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Nunito+Sans:opsz,wght@6..12,400;6..12,600;6..12,700&display=swap">
+<style>
+/* Layout: one-screen app. Top bar (title, maturity, mode), then the colourful value chain wheel beside one compact detail card. */
+:root {
+  --bg: #F4F6FF;
+  --surface: #FFFFFF;
+  --surface-2: #EEF1FB;
+  --ink: #1B1E3C;
+  --muted: #5C6188;
+  --line: #DCE1F2;
+  --ai: #6D4AFF;
+  --ai-soft: #EDE8FF;
+  --on-color: #FFFFFF;
+  --c-engage: #12B886;
+  --c-plan: #2F8BFF;
+  --c-improve: #FF8A00;
+  --c-deliver: #F03E6E;
+  --c-build: #F5B800;
+  --c-design: #B44CF0;
+  --before: #C3C8DE;
+  --font-display: "Bricolage Grotesque", "Avenir Next", "Segoe UI", system-ui, sans-serif;
+  --font-body: "Nunito Sans", "Segoe UI", system-ui, -apple-system, sans-serif;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #12142B; --surface: #1C1F3D; --surface-2: #252950; --ink: #F1F2FF; --muted: #A9AED6; --line: #343966;
+    --ai: #9C85FF; --ai-soft: #2D2763; --on-color: #FFFFFF; --before: #4A4F7C;
+    --c-engage: #20C997; --c-plan: #4DA3FF; --c-improve: #FF9A2E; --c-deliver: #FF5C88; --c-build: #E8AE00; --c-design: #C26BF5;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #12142B; --surface: #1C1F3D; --surface-2: #252950; --ink: #F1F2FF; --muted: #A9AED6; --line: #343966;
+  --ai: #9C85FF; --ai-soft: #2D2763; --on-color: #FFFFFF; --before: #4A4F7C;
+  --c-engage: #20C997; --c-plan: #4DA3FF; --c-improve: #FF9A2E; --c-deliver: #FF5C88; --c-build: #E8AE00; --c-design: #C26BF5;
+  color-scheme: dark;
+}
+* { box-sizing: border-box; }
+html, body { height: 100%; }
+body {
+  margin: 0; background: var(--bg); color: var(--ink);
+  font-family: var(--font-body); font-size: 15px; line-height: 1.45;
+  padding-left: max(16px, env(safe-area-inset-left, 0px));
+  padding-right: max(16px, env(safe-area-inset-right, 0px));
+  padding-block: 14px;
+}
+.app { height: 100%; max-width: 1280px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+h1, h2 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
+p { margin: 0; }
+
+/* Top bar */
+.top { display: flex; align-items: center; justify-content: space-between; gap: 12px 20px; flex-wrap: wrap; }
+.brand { display: grid; gap: 2px; min-width: 0; }
+.brand h1 { font-size: clamp(22px, 2.6vw, 32px); font-weight: 800; line-height: 1.05; }
+.brand h1 span { background: linear-gradient(90deg, var(--c-plan), var(--ai), var(--c-deliver), var(--c-improve)); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.brand p { color: var(--muted); font-size: 13.5px; }
+.controls { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.pillset { display: inline-flex; background: var(--surface); border: 1px solid var(--line); border-radius: 999px; padding: 3px; gap: 2px; }
+.pillset button {
+  appearance: none; border: 0; background: transparent; color: var(--muted); cursor: pointer;
+  padding: 7px 14px; border-radius: 999px; font: 700 13.5px var(--font-body); white-space: nowrap;
+}
+.pillset button[aria-pressed="true"] { background: var(--ai); color: var(--on-color); }
+.pillset.mode button[aria-pressed="true"] { background: var(--ink); color: var(--bg); }
+.pill-label { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+button:focus-visible, .node:focus-visible { outline: 3px solid var(--ai); outline-offset: 2px; }
+
+/* Main */
+.main { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(320px, 1fr); gap: 14px; min-height: 0; }
+.map-card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 10px; min-height: 0; display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+svg.map { width: 100%; height: 100%; display: block; }
+.hint { text-align: center; font-size: 12.5px; color: var(--muted); padding-bottom: 4px; }
+
+.node { cursor: pointer; }
+.node .disc { transition: transform .25s ease; transform-box: fill-box; transform-origin: center; }
+.node:hover .disc, .node.sel .disc { transform: scale(1.07); }
+.node .ring-bg { fill: none; stroke: var(--surface-2); stroke-width: 7; }
+.node .ring { fill: none; stroke-width: 7; stroke-linecap: round; transition: stroke-dasharray .6s ease; }
+.node text { font-family: var(--font-display); font-weight: 800; font-size: 15px; fill: var(--on-color); text-anchor: middle; pointer-events: none; }
+.node .count { font-family: var(--font-body); font-weight: 700; font-size: 11.5px; fill: var(--on-color); opacity: .92; }
+.node.sel .sel-ring { opacity: 1; }
+.sel-ring { fill: none; stroke: var(--ink); stroke-width: 2; stroke-dasharray: 3 5; opacity: 0; transition: opacity .2s; }
+.node.dim { opacity: .25; }
+.chain { stroke: var(--line); stroke-width: 3; fill: none; }
+.spoke { fill: none; stroke-dasharray: 3 8; stroke-linecap: round; animation: flow 1.4s linear infinite; transition: stroke-width .4s, opacity .4s; }
+@keyframes flow { to { stroke-dashoffset: -22; } }
+.core .disc { fill: var(--ai); }
+.core-glow { fill: var(--ai-soft); }
+.core-spin { fill: none; stroke: var(--ai); stroke-width: 2; stroke-dasharray: 2 7; transform-box: fill-box; transform-origin: center; animation: spin 24s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.io rect { fill: var(--surface-2); }
+.io text { font-family: var(--font-display); font-weight: 600; font-size: 15px; fill: var(--ink); text-anchor: middle; }
+.io-arrow { stroke: var(--muted); stroke-width: 2.5; fill: none; }
+.trail { fill: none; stroke: var(--ai); stroke-width: 4; stroke-linecap: round; }
+.trail.old { opacity: .3; }
+.token-dot { fill: var(--c-build); stroke: var(--surface); stroke-width: 3; }
+@media (prefers-reduced-motion: reduce) { .spoke, .core-spin { animation: none; } }
+
+/* Detail card */
+.card { background: var(--surface); border: 1px solid var(--line); border-radius: 22px; padding: 18px; display: grid; align-content: start; gap: 14px; min-height: 0; overflow-y: auto; }
+.card-head { display: grid; gap: 4px; }
+.tag { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; }
+.tag i { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.card h2 { font-size: 26px; line-height: 1.1; }
+.card .lead { color: var(--muted); }
+.uses { list-style: none; margin: 0; padding: 0; display: grid; gap: 7px; }
+.uses li { display: flex; gap: 10px; align-items: flex-start; padding: 9px 11px; border-radius: 12px; background: var(--surface-2); transition: opacity .3s; }
+.uses li.off { opacity: .4; }
+.uses li b { display: block; font-weight: 700; font-size: 14.5px; }
+.uses li span.d { color: var(--muted); font-size: 13px; }
+.lvl { flex: none; width: 22px; height: 22px; border-radius: 50%; display: grid; place-items: center; font-size: 11.5px; font-weight: 800; color: var(--on-color); background: var(--ai); margin-top: 1px; }
+.uses li.off .lvl { background: var(--before); }
+.kpi { display: grid; gap: 8px; padding: 14px; border-radius: 16px; }
+.kpi-top { display: flex; justify-content: space-between; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.kpi-name { font-weight: 700; }
+.kpi-num { font-family: var(--font-display); font-weight: 800; font-size: 28px; line-height: 1; font-variant-numeric: tabular-nums; }
+.kpi-num s { text-decoration: none; color: var(--muted); font-size: 18px; font-weight: 600; }
+.bars { display: grid; gap: 5px; }
+.bar { height: 9px; border-radius: 5px; background: var(--surface); overflow: hidden; }
+.bar i { display: block; height: 100%; border-radius: 5px; transition: width .6s ease; }
+.small { font-size: 12px; color: var(--muted); }
+
+/* Trace */
+.scen { display: flex; gap: 6px; flex-wrap: wrap; }
+.scen button { appearance: none; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 6px 12px; font: 700 13px var(--font-body); cursor: pointer; }
+.scen button[aria-pressed="true"] { border-color: var(--ai); background: var(--ai-soft); }
+.dots { display: flex; gap: 6px; }
+.dots button { appearance: none; border: 0; padding: 0; height: 8px; flex: 1; border-radius: 4px; background: var(--surface-2); cursor: pointer; }
+.dots button.done { background: var(--ai); opacity: .45; }
+.dots button.cur { background: var(--ai); }
+.step { display: grid; gap: 6px; padding: 14px; border-radius: 16px; background: var(--surface-2); min-height: 132px; align-content: start; }
+.step .who { font-size: 12px; font-weight: 800; text-transform: uppercase; letter-spacing: .06em; }
+.step h3 { margin: 0; font-family: var(--font-display); font-size: 19px; }
+.step .t { font-size: 13px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.btns { display: flex; gap: 8px; }
+.btn { appearance: none; border: 1.5px solid var(--line); background: var(--surface); color: var(--ink); border-radius: 999px; padding: 8px 16px; font: 700 14px var(--font-body); cursor: pointer; }
+.btn.primary { background: var(--ai); color: var(--on-color); border-color: var(--ai); flex: 1; }
+.compare { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 6px 10px; align-items: center; font-size: 13px; font-weight: 600; }
+.compare .n { font-variant-numeric: tabular-nums; text-align: right; }
+.big { font-family: var(--font-display); font-weight: 800; font-size: 26px; color: var(--ai); line-height: 1; }
+
+@media (max-width: 860px) {
+  html, body { height: auto; }
+  .app { height: auto; }
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .map-card { height: 62vh; min-height: 340px; }
+  .card { overflow: visible; }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+  <header class="top">
+    <div class="brand">
+      <h1>The Intelligent <span>Value Chain</span></h1>
+      <p>How AI lifts every activity of the ITIL 4 service value chain</p>
+    </div>
+    <div class="controls">
+      <span class="pill-label">AI level</span>
+      <div class="pillset" role="group" aria-label="AI maturity level">
+        <button type="button" id="lvl-1" data-lvl="1" aria-pressed="false" title="AI suggests, people act">Assist</button>
+        <button type="button" id="lvl-2" data-lvl="2" aria-pressed="true" title="AI drafts, people approve">Augment</button>
+        <button type="button" id="lvl-3" data-lvl="3" aria-pressed="false" title="AI acts inside guardrails">Autonomous</button>
+      </div>
+      <div class="pillset mode" role="group" aria-label="View">
+        <button type="button" id="mode-explore" aria-pressed="true">Explore</button>
+        <button type="button" id="mode-trace" aria-pressed="false">Trace a journey</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="main">
+    <div class="map-card">
+      <svg class="map" id="map" viewBox="0 0 760 540" preserveAspectRatio="xMidYMid meet" role="img" aria-label="Six value chain activities around a central AI layer"></svg>
+      <div class="hint" id="hint">Click a bubble. The coloured ring shows how much AI is switched on at this level.</div>
+    </div>
+    <aside class="card" id="card" aria-live="polite"></aside>
+  </main>
+</div>
+
+<script>
+(function () {
+  const NS = 'http://www.w3.org/2000/svg';
+  const CX = 380, CY = 270, R = 182, NR = 52;
+  const LVL = { 1: 'Assist', 2: 'Augment', 3: 'Autonomous' };
+  const LVL_HOW = { 1: 'AI suggests, people act.', 2: 'AI drafts, people approve.', 3: 'AI acts inside guardrails, people oversee.' };
+
+  const ACT = {
+    engage:  { name: 'Engage', lines: ['Engage'], angle: 180, c: '--c-engage',
+      lead: 'Talk to customers and understand what they need.',
+      uses: [['Virtual agent', 'Answers common questions 24/7 in any language', 1], ['Smart routing', 'Sends each request to the right team first time', 2], ['Proactive alerts', 'Warns users about an outage before they call', 3]],
+      kpi: ['First-contact resolution', '%', 58, [65, 74, 82], true] },
+    plan:    { name: 'Plan', lines: ['Plan'], angle: 240, c: '--c-plan',
+      lead: 'Set direction, budgets and priorities.',
+      uses: [['Strategy summaries', 'Turns long reports into one-page briefings', 1], ['Demand forecasting', 'Predicts volume and cost per service', 2], ['Auto-rebalancing', 'Shifts capacity within agreed limits', 3]],
+      kpi: ['Forecast accuracy', '%', 70, [76, 85, 92], true] },
+    improve: { name: 'Improve', lines: ['Improve'], angle: 300, c: '--c-improve',
+      lead: 'Keep getting better across the chain.',
+      uses: [['Feedback mining', 'Finds top pain points in every comment', 1], ['Root-cause clustering', 'Groups repeat incidents into problems', 2], ['Self-running experiments', 'Tests fixes and keeps what works', 3]],
+      kpi: ['Repeat incidents', '%', 35, [30, 20, 12], false] },
+    deliver: { name: 'Deliver & Support', lines: ['Deliver &', 'Support'], angle: 0, c: '--c-deliver',
+      lead: 'Run services and help users every day.',
+      uses: [['Agent assist', 'Suggests fixes and drafts replies', 1], ['AIOps', 'Turns alert floods into a few real incidents', 2], ['Self-healing', 'Fixes known faults automatically', 3]],
+      kpi: ['Time to restore', 'min', 240, [180, 90, 30], false] },
+    build:   { name: 'Obtain / Build', lines: ['Obtain /', 'Build'], angle: 60, c: '--c-build',
+      lead: 'Get or build the parts a service needs.',
+      uses: [['Coding copilot', 'Writes code, tests and infrastructure', 1], ['Licence optimiser', 'Finds unused licences and cloud waste', 2], ['Self-fixing pipeline', 'Repairs failed builds and patches risks', 3]],
+      kpi: ['Build lead time', 'days', 14, [11, 6, 2], false] },
+    design:  { name: 'Design & Transition', lines: ['Design &', 'Transition'], angle: 120, c: '--c-design',
+      lead: 'Design services and release changes safely.',
+      uses: [['Auto release notes', 'Drafts guides and knowledge from each change', 1], ['Change risk score', 'Low-risk changes skip the approval queue', 2], ['Auto canary release', 'Rolls out in waves and rolls back if needed', 3]],
+      kpi: ['Change success rate', '%', 85, [88, 94, 98], true] }
+  };
+  const ORDER = ['engage', 'plan', 'improve', 'deliver', 'build', 'design'];
+
+  const SCEN = [
+    { id: 'vpn', name: 'Fix a VPN outage', unit: 'min', steps: [
+      ['engage', 'User reports a problem', 'Virtual agent spots the known issue and logs one linked ticket.', 20, 1, 1],
+      ['deliver', 'Find the cause', 'AIOps links 1,400 alerts to one failing gateway.', 60, 3, 2],
+      ['engage', 'Tell everyone affected', 'Proactive message reaches 300 users with a workaround.', 30, 1, 3],
+      ['deliver', 'Restore service', 'Self-healing runbook restarts the gateway and checks it.', 90, 6, 3],
+      ['improve', 'Stop it happening again', 'Clustering finds 4 similar past incidents and opens a problem.', 2880, 30, 2]
+    ]},
+    { id: 'hire', name: 'Onboard a new hire', unit: 'h', steps: [
+      ['engage', 'Manager asks for setup', 'Chat form fills 90% of the request from the job role.', 2, 0.2, 1],
+      ['design', 'Pick the right access', 'AI suggests least-privilege access based on teammates.', 8, 0.5, 2],
+      ['build', 'Get laptop and licences', 'Optimiser reuses a spare licence and laptop in stock.', 72, 24, 2],
+      ['deliver', 'Set up accounts', 'Agent runs identity and device setup end to end.', 16, 0.5, 3],
+      ['engage', 'Day-one help', 'Onboarding assistant answers setup questions.', 4, 0.5, 1]
+    ]},
+    { id: 'ship', name: 'Ship a new feature', unit: 'days', steps: [
+      ['plan', 'Prioritise it', 'What-if model shows it is the best value for the sprint.', 10, 3, 2],
+      ['design', 'Design the journey', 'AI drafts user journeys and acceptance tests.', 8, 3, 2],
+      ['build', 'Build and test', 'Copilot writes code and tests with the team.', 15, 8, 1],
+      ['design', 'Release safely', 'Low risk score, so it skips the queue and goes out as a canary.', 7, 0.5, 3],
+      ['improve', 'Measure the value', 'Experiment report shows the conversion lift.', 14, 2, 2]
+    ]}
+  ];
+
+  let level = 2, mode = 'explore', selected = 'deliver', scen = SCEN[0], stepIdx = 0, timer = null;
+
+  const el = (tag, a, p) => { const e = document.createElementNS(NS, tag); for (const k in a) e.setAttribute(k, a[k]); if (p) p.appendChild(e); return e; };
+  const pos = (k) => { const a = ACT[k].angle * Math.PI / 180; return { x: CX + R * Math.cos(a), y: CY + R * Math.sin(a) }; };
+
+  const svg = document.getElementById('map');
+  const defs = el('defs', {}, svg);
+  const mk = el('marker', { id: 'arr', viewBox: '0 0 10 10', refX: '8', refY: '5', markerWidth: '6', markerHeight: '6', orient: 'auto' }, defs);
+  el('path', { d: 'M0,0 L10,5 L0,10 z', fill: 'var(--muted)' }, mk);
+  const gLinks = el('g', {}, svg), gSpokes = el('g', {}, svg), gTrail = el('g', {}, svg), gNodes = el('g', {}, svg), gTop = el('g', {}, svg);
+  const nodes = {}, spokes = {}, rings = {}, counts = {};
+
+  ORDER.forEach((k, i) => { const p = pos(k), q = pos(ORDER[(i + 1) % 6]); el('line', { x1: p.x, y1: p.y, x2: q.x, y2: q.y, class: 'chain' }, gLinks); });
+  const io = el('g', { class: 'io' }, gLinks);
+  el('rect', { x: 8, y: 248, width: 110, height: 44, rx: 22 }, io); el('text', { x: 63, y: 275 }, io).textContent = 'Demand';
+  el('rect', { x: 642, y: 248, width: 110, height: 44, rx: 22 }, io); el('text', { x: 697, y: 275 }, io).textContent = 'Value';
+  el('line', { x1: 120, y1: CY, x2: pos('engage').x - NR - 14, y2: CY, class: 'io-arrow', 'marker-end': 'url(#arr)' }, gLinks);
+  el('line', { x1: pos('deliver').x + NR + 12, y1: CY, x2: 638, y2: CY, class: 'io-arrow', 'marker-end': 'url(#arr)' }, gLinks);
+
+  const core = el('g', { class: 'node core', tabindex: '0', role: 'button', 'aria-label': 'AI layer' }, gNodes);
+  el('circle', { cx: CX, cy: CY, r: 78, class: 'core-glow' }, core);
+  el('circle', { cx: CX, cy: CY, r: 78, class: 'core-spin' }, core);
+  el('circle', { cx: CX, cy: CY, r: 56, class: 'disc' }, core);
+  el('text', { x: CX, y: CY - 2 }, core).textContent = 'AI layer';
+  const coreSub = el('text', { x: CX, y: CY + 17, class: 'count' }, core);
+
+  ORDER.forEach((k) => {
+    const A = ACT[k], p = pos(k);
+    const dx = p.x - CX, dy = p.y - CY, d = Math.hypot(dx, dy), ux = dx / d, uy = dy / d;
+    spokes[k] = el('line', { x1: CX + ux * 82, y1: CY + uy * 82, x2: p.x - ux * (NR + 14), y2: p.y - uy * (NR + 14), class: 'spoke', stroke: `var(${A.c})` }, gSpokes);
+    const g = el('g', { class: 'node', tabindex: '0', role: 'button', 'aria-label': A.name }, gNodes);
+    const rr = NR + 9, circ = 2 * Math.PI * rr;
+    el('circle', { cx: p.x, cy: p.y, r: rr + 7, class: 'sel-ring' }, g);
+    el('circle', { cx: p.x, cy: p.y, r: rr, class: 'ring-bg' }, g);
+    rings[k] = el('circle', { cx: p.x, cy: p.y, r: rr, class: 'ring', stroke: `var(${A.c})`, 'stroke-dasharray': `0 ${circ}`, transform: `rotate(-90 ${p.x} ${p.y})` }, g);
+    rings[k].dataset.circ = circ;
+    el('circle', { cx: p.x, cy: p.y, r: NR, class: 'disc', fill: `var(${A.c})` }, g);
+    const y0 = A.lines.length === 1 ? p.y + 1 : p.y - 7;
+    A.lines.forEach((t, i) => { el('text', { x: p.x, y: y0 + i * 17 }, g).textContent = t; });
+    counts[k] = el('text', { x: p.x, y: y0 + A.lines.length * 17 + 2, class: 'count' }, g);
+    nodes[k] = g;
+    const act = () => onNode(k);
+    g.addEventListener('click', act);
+    g.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); act(); } });
+  });
+  core.addEventListener('click', () => onNode('core'));
+  core.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onNode('core'); } });
+  const dot = el('circle', { r: 10, class: 'token-dot', cx: -40, cy: -40 }, gTop);
+
+  const live = (k) => ACT[k].uses.filter(u => u[2] <= level).length;
+
+  function fmt(v, u) {
+    if (u === 'min') { if (v >= 1440) return (v / 1440).toFixed(v % 1440 ? 1 : 0) + ' days'; if (v >= 60) return +(v / 60).toFixed(1) + ' h'; return Math.round(v) + ' min'; }
+    if (u === 'h') { if (v < 1) return Math.round(v * 60) + ' min'; if (v >= 24) return +(v / 24).toFixed(1) + ' days'; return +v.toFixed(1) + ' h'; }
+    if (u === 'days') { if (v < 1) return Math.round(v * 24) + ' h'; return +v.toFixed(1) + ' days'; }
+    return v + '%';
+  }
+
+  function paintMap() {
+    let n = 0;
+    ORDER.forEach((k) => {
+      const c = +rings[k].dataset.circ, l = live(k); n += l;
+      rings[k].setAttribute('stroke-dasharray', `${(l / 3) * c} ${c}`);
+      counts[k].textContent = `${l} of 3 AI on`;
+      spokes[k].style.strokeWidth = 1.5 + level * 1.4;
+      spokes[k].style.opacity = 0.4 + level * 0.2;
+      nodes[k].classList.toggle('sel', mode === 'explore' && selected === k);
+      nodes[k].classList.toggle('dim', mode === 'trace' && !scen.steps.some(s => s[0] === k));
+    });
+    core.classList.toggle('sel', mode === 'explore' && selected === 'core');
+    coreSub.textContent = `${n} of 18 on`;
+    dot.style.display = mode === 'trace' ? '' : 'none';
+    document.getElementById('hint').textContent = mode === 'explore'
+      ? 'Click a bubble. The coloured ring shows how much AI is switched on at this level.'
+      : 'Press Play or click a bubble on the route to jump to that step.';
+  }
+
+  const card = document.getElementById('card');
+
+  function renderExplore() {
+    if (selected === 'core') {
+      card.innerHTML = `
+        <div class="card-head"><span class="tag" style="color:var(--ai)"><i style="background:var(--ai)"></i>Shared foundation</span>
+        <h2>AI layer</h2><p class="lead">One brain every activity shares, so a lesson learned anywhere helps everywhere.</p></div>
+        <ul class="uses">
+          <li><span class="lvl">1</span><div><b>Knowledge</b><span class="d">Service map, CMDB and knowledge articles in one place</span></div></li>
+          <li><span class="lvl">2</span><div><b>Data</b><span class="d">Tickets, chats, telemetry, changes and costs together</span></div></li>
+          <li><span class="lvl">3</span><div><b>Models and agents</b><span class="d">Predict, write and act on runbooks</span></div></li>
+          <li><span class="lvl">✓</span><div><b>Guardrails</b><span class="d">Approvals, audit trail, privacy and monitoring</span></div></li>
+        </ul>
+        <p class="small"><b>${LVL[level]}:</b> ${LVL_HOW[level]}</p>`;
+      return;
+    }
+    const A = ACT[selected], [kn, ku, kb, kt, up] = A.kpi, target = kt[level - 1];
+    const max = Math.max(kb, ...kt) * 1.05;
+    const gain = up ? `+${target - kb} pts` : `${Math.round((1 - target / kb) * 100)}% less`;
+    card.innerHTML = `
+      <div class="card-head"><span class="tag" style="color:var(${A.c})"><i style="background:var(${A.c})"></i>Value chain activity</span>
+      <h2>${A.name}</h2><p class="lead">${A.lead}</p></div>
+      <ul class="uses">${A.uses.map(u => `<li class="${u[2] <= level ? '' : 'off'}"><span class="lvl" title="Needs level ${u[2]}">${u[2]}</span><div><b>${u[0]}</b><span class="d">${u[1]}</span></div></li>`).join('')}</ul>
+      <div class="kpi" style="background:color-mix(in srgb, var(${A.c}) 14%, var(--surface))">
+        <div class="kpi-top"><span class="kpi-name">${kn}</span><span class="small">at ${LVL[level]} level</span></div>
+        <div class="kpi-num"><s>${fmt(kb, ku)} →</s> <span style="color:var(${A.c})">${fmt(target, ku)}</span></div>
+        <div class="bars">
+          <div class="bar" title="Today"><i style="width:${kb / max * 100}%;background:var(--before)"></i></div>
+          <div class="bar" title="With AI"><i style="width:${target / max * 100}%;background:var(${A.c})"></i></div>
+        </div>
+        <span class="small">Grey is today, colour is with AI (${gain}). Illustrative target.</span>
+      </div>`;
+  }
+
+  function totals() { let b = 0, w = 0; scen.steps.forEach(s => { b += s[3]; w += s[5] <= level ? s[4] : s[3]; }); return { b, w }; }
+
+  function renderTrace() {
+    const s = scen.steps[stepIdx], A = ACT[s[0]], on = s[5] <= level, t = totals();
+    card.innerHTML = `
+      <div class="card-head"><span class="tag" style="color:var(--ai)"><i style="background:var(--ai)"></i>Follow one journey</span></div>
+      <div class="scen" role="group" aria-label="Journey">${SCEN.map(x => `<button type="button" id="scen-${x.id}" data-id="${x.id}" aria-pressed="${x === scen}">${x.name}</button>`).join('')}</div>
+      <div class="dots">${scen.steps.map((_, i) => `<button type="button" aria-label="Step ${i + 1}" data-i="${i}" class="${i === stepIdx ? 'cur' : i < stepIdx ? 'done' : ''}"></button>`).join('')}</div>
+      <div class="step">
+        <span class="who" style="color:var(${A.c})">Step ${stepIdx + 1} · ${A.name}</span>
+        <h3>${s[1]}</h3>
+        <p>${on ? s[2] : `Still manual at ${LVL[level]} level. Switch to ${LVL[s[5]]} to let AI do this.`}</p>
+        <span class="t">${fmt(s[3], scen.unit)} → <span style="color:var(--ai)">${fmt(on ? s[4] : s[3], scen.unit)}</span></span>
+      </div>
+      <div class="btns">
+        <button type="button" class="btn" id="prev" aria-label="Previous step">←</button>
+        <button type="button" class="btn primary" id="play">${timer ? 'Pause' : stepIdx === scen.steps.length - 1 ? 'Replay' : 'Play'}</button>
+        <button type="button" class="btn" id="next" aria-label="Next step">→</button>
+      </div>
+      <div class="compare">
+        <span>Today</span><div class="bar" style="background:var(--surface-2)"><i style="width:100%;background:var(--before)"></i></div><span class="n">${fmt(t.b, scen.unit)}</span>
+        <span>With AI</span><div class="bar" style="background:var(--surface-2)"><i style="width:${Math.max(2, t.w / t.b * 100)}%;background:var(--ai)"></i></div><span class="n">${fmt(t.w, scen.unit)}</span>
+      </div>
+      <p><span class="big">${Math.round((1 - t.w / t.b) * 100)}% faster</span> <span class="small">end to end at ${LVL[level]} level (illustrative)</span></p>`;
+    card.querySelectorAll('.scen button').forEach(b => b.addEventListener('click', () => { stop(); scen = SCEN.find(x => x.id === b.dataset.id); go(0, true); }));
+    card.querySelectorAll('.dots button').forEach(b => b.addEventListener('click', () => { stop(); go(+b.dataset.i); }));
+    card.querySelector('#prev').addEventListener('click', () => { stop(); go(Math.max(0, stepIdx - 1)); });
+    card.querySelector('#next').addEventListener('click', () => { stop(); go(Math.min(scen.steps.length - 1, stepIdx + 1)); });
+    card.querySelector('#play').addEventListener('click', togglePlay);
+  }
+
+  /* journey animation */
+  const reduce = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const lift = (p) => ({ x: p.x, y: p.y - NR - 10 });
+  function bend(p, q) {
+    const mx = (p.x + q.x) / 2, my = (p.y + q.y) / 2;
+    let ox = mx - CX, oy = my - CY; const d = Math.hypot(ox, oy);
+    if (d < 1) { ox = 0; oy = -1; }
+    const n = Math.hypot(ox, oy), bow = d < 60 ? 175 : 40;
+    return { x: mx + ox / n * bow, y: my + oy / n * bow };
+  }
+  function drawTrail() {
+    gTrail.innerHTML = '';
+    for (let i = 1; i <= stepIdx; i++) {
+      const a = scen.steps[i - 1][0], b = scen.steps[i][0]; if (a === b) continue;
+      const p = pos(a), q = pos(b), c = bend(p, q);
+      el('path', { d: `M${p.x},${p.y} Q${c.x},${c.y} ${q.x},${q.y}`, class: 'trail' + (i < stepIdx ? ' old' : '') }, gTrail);
+    }
+  }
+  let raf = null;
+  function moveDot(from, to) {
+    if (raf) cancelAnimationFrame(raf);
+    if (!from || reduce) { dot.setAttribute('cx', to.x); dot.setAttribute('cy', to.y); return; }
+    const c = bend(from, to), t0 = performance.now();
+    (function f(now) {
+      let t = Math.min(1, (now - t0) / 700); t = t < .5 ? 2 * t * t : 1 - Math.pow(-2 * t + 2, 2) / 2;
+      dot.setAttribute('cx', (1 - t) * (1 - t) * from.x + 2 * (1 - t) * t * c.x + t * t * to.x);
+      dot.setAttribute('cy', (1 - t) * (1 - t) * from.y + 2 * (1 - t) * t * c.y + t * t * to.y);
+      if (t < 1) raf = requestAnimationFrame(f);
+    })(t0);
+  }
+  function go(i, fresh) {
+    const from = fresh ? null : lift(pos(scen.steps[stepIdx][0]));
+    stepIdx = i; drawTrail();
+    moveDot(from, lift(pos(scen.steps[i][0])));
+    render();
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; } }
+  function togglePlay() {
+    if (timer) { stop(); render(); return; }
+    if (stepIdx === scen.steps.length - 1) go(0, true);
+    timer = setInterval(() => { if (stepIdx >= scen.steps.length - 1) { stop(); render(); } else go(stepIdx + 1); }, 2200);
+    render();
+  }
+
+  function onNode(k) {
+    if (mode === 'trace' && k !== 'core') {
+      const i = scen.steps.findIndex((s, j) => s[0] === k && j > stepIdx);
+      const j = i >= 0 ? i : scen.steps.findIndex(s => s[0] === k);
+      if (j >= 0) { stop(); go(j); return; }
+    }
+    if (mode === 'trace') setMode('explore');
+    selected = k; render();
+  }
+  function setMode(m) {
+    stop(); mode = m;
+    document.getElementById('mode-explore').setAttribute('aria-pressed', m === 'explore');
+    document.getElementById('mode-trace').setAttribute('aria-pressed', m === 'trace');
+    if (m === 'trace') go(0, true); else { gTrail.innerHTML = ''; render(); }
+  }
+  document.getElementById('mode-explore').addEventListener('click', () => setMode('explore'));
+  document.getElementById('mode-trace').addEventListener('click', () => setMode('trace'));
+  document.querySelectorAll('[data-lvl]').forEach(b => b.addEventListener('click', () => {
+    level = +b.dataset.lvl;
+    document.querySelectorAll('[data-lvl]').forEach(x => x.setAttribute('aria-pressed', x === b));
+    render();
+  }));
+
+  function render() { paintMap(); mode === 'explore' ? renderExplore() : renderTrace(); }
+  render();
+})();
+</script>
+</body>
+</html>
