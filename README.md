@@ -12,6 +12,10 @@ Live: https://kate1819.github.io/ai-value-chain/
 - **Turn up the AI level.** Switch between Assist (AI suggests, people act), Augment (AI drafts, people approve) and Autonomous (AI acts inside guardrails). The rings fill, the connections grow stronger and the targets change.
 - **Trace a journey.** Play one of three end-to-end journeys (fix a VPN outage, onboard a new hire, ship a new feature) and watch it move through the chain, with the time saved at each step and overall.
 
+- **Or just watch.** The page plays a 45-second auto tour on its own and loops. Click anything to take over; the tour comes back after 25 seconds without a click. Add `#still` to the address to turn it off, or `#video` for the tall layout used to record the video.
+
+A 4:5 video of the tour for LinkedIn and other feeds is in [`media/ai-value-chain-linkedin.mp4`](media/ai-value-chain-linkedin.mp4).
+
 The numbers are illustrative targets to start a conversation, not benchmarks.
 
 ## Files

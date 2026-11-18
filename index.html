@@ -52,7 +52,7 @@ body {
   padding-right: max(16px, env(safe-area-inset-right, 0px));
   padding-block: 14px;
 }
-.app { height: 100%; max-width: 1280px; margin: 0 auto; display: grid; grid-template-rows: auto minmax(0, 1fr); gap: 12px; }
+.app { height: 100%; max-width: 1280px; margin: 0 auto; display: grid; grid-template-rows: auto auto minmax(0, 1fr); gap: 10px; }
 h1, h2 { font-family: var(--font-display); margin: 0; text-wrap: balance; }
 p { margin: 0; }
 
@@ -147,6 +147,32 @@ svg.map { width: 100%; height: 100%; display: block; }
 .compare .n { font-variant-numeric: tabular-nums; text-align: right; }
 .big { font-family: var(--font-display); font-weight: 800; font-size: 26px; color: var(--ai); line-height: 1; }
 
+.badge { display: inline-block; margin-left: 10px; vertical-align: middle; font: 700 12px var(--font-body); letter-spacing: .04em; color: var(--on-color); background: linear-gradient(90deg, var(--c-plan), var(--ai), var(--c-deliver)); padding: 4px 10px; border-radius: 999px; -webkit-text-fill-color: var(--on-color); }
+.progress { height: 4px; border-radius: 2px; background: var(--surface-2); overflow: hidden; }
+.progress i { display: block; height: 100%; width: 0; background: linear-gradient(90deg, var(--c-engage), var(--c-plan), var(--ai), var(--c-deliver), var(--c-improve)); }
+.hint.cap { font-family: var(--font-display); font-weight: 800; font-size: 19px; color: var(--ink); padding: 4px 8px 8px; }
+.hint.cap em { font-style: normal; color: var(--ai); }
+.auto-chip { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: var(--muted); }
+.auto-chip i { width: 8px; height: 8px; border-radius: 50%; background: var(--c-deliver); animation: blink 1.2s ease-in-out infinite; }
+@keyframes blink { 50% { opacity: .25; } }
+/* Video mode (#video): stacked 4:5 layout for recording a feed video */
+html.video, html.video body { height: 100%; }
+html.video body { padding-block: 14px; }
+html.video .app { height: 100%; }
+html.video .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1fr) auto; }
+html.video .map-card { height: auto; min-height: 0; }
+html.video .card { overflow: hidden; padding: 16px 18px; gap: 12px 18px; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); align-items: start; }
+html.video .card > * { grid-column: 1; }
+html.video .card > .uses { grid-column: 2; grid-row: 1 / span 3; }
+html.video .card:has(.step) > .card-head, html.video .card > .dots { grid-column: 1 / -1; }
+html.video .card > .step { grid-row: span 2; }
+html.video .card > .compare, html.video .card > .bigline { grid-column: 2; }
+html.video .main { grid-template-rows: minmax(0, 1fr) 320px; }
+html.video .scen, html.video .btns, html.video .pill-label { display: none; }
+html.video .step { min-height: 0; }
+html.video .uses { gap: 6px; }
+html.video .uses li { padding: 7px 10px; }
+html.video .hint.cap { font-size: 20px; }
 @media (max-width: 860px) {
   html, body { height: auto; }
   .app { height: auto; }
@@ -162,7 +188,7 @@ svg.map { width: 100%; height: 100%; display: block; }
   <header class="top">
     <div class="brand">
       <h1>The Intelligent <span>Value Chain</span></h1>
-      <p>How AI lifts every activity of the ITIL 4 service value chain</p>
+      <p>How AI lifts every activity of the ITIL 4 service value chain <span class="badge">Kate AI Design #1</span></p>
     </div>
     <div class="controls">
       <span class="pill-label">AI level</span>
@@ -177,6 +203,7 @@ svg.map { width: 100%; height: 100%; display: block; }
       </div>
     </div>
   </header>
+  <div class="progress" aria-hidden="true"><i id="prog"></i></div>
 
   <main class="main">
     <div class="map-card">
@@ -380,7 +407,7 @@ svg.map { width: 100%; height: 100%; display: block; }
         <span>Today</span><div class="bar" style="background:var(--surface-2)"><i style="width:100%;background:var(--before)"></i></div><span class="n">${fmt(t.b, scen.unit)}</span>
         <span>With AI</span><div class="bar" style="background:var(--surface-2)"><i style="width:${Math.max(2, t.w / t.b * 100)}%;background:var(--ai)"></i></div><span class="n">${fmt(t.w, scen.unit)}</span>
       </div>
-      <p><span class="big">${Math.round((1 - t.w / t.b) * 100)}% faster</span> <span class="small">end to end at ${LVL[level]} level (illustrative)</span></p>`;
+      <p class="bigline"><span class="big">${Math.round((1 - t.w / t.b) * 100)}% faster</span> <span class="small">end to end at ${LVL[level]} level (illustrative)</span></p>`;
     card.querySelectorAll('.scen button').forEach(b => b.addEventListener('click', () => { stop(); scen = SCEN.find(x => x.id === b.dataset.id); go(0, true); }));
     card.querySelectorAll('.dots button').forEach(b => b.addEventListener('click', () => { stop(); go(+b.dataset.i); }));
     card.querySelector('#prev').addEventListener('click', () => { stop(); go(Math.max(0, stepIdx - 1)); });
@@ -455,8 +482,58 @@ svg.map { width: 100%; height: 100%; display: block; }
     render();
   }));
 
-  function render() { paintMap(); mode === 'explore' ? renderExplore() : renderTrace(); }
+  function render() { paintMap(); mode === 'explore' ? renderExplore() : renderTrace(); if (autoOn) showCaption(); }
+
+  /* ---------- autoplay: plays the whole story on its own, loops, pauses when someone takes over ---------- */
+  const hint = document.getElementById('hint'), prog = document.getElementById('prog');
+  const params = location.search + location.hash;
+  if (/video/.test(params)) { document.documentElement.classList.add('video'); svg.setAttribute('viewBox', '0 28 760 486'); }
+  let autoOn = !/(still|autoplay=0)/.test(params), caption = '', sceneTimer = null, idleTimer = null, sceneIdx = 0;
+  const setLevel = (l) => { level = l; document.querySelectorAll('[data-lvl]').forEach(x => x.setAttribute('aria-pressed', +x.dataset.lvl === l)); };
+  const pick = (k) => () => { if (mode !== 'explore') setMode('explore'); selected = k; render(); };
+  const SCENES = [
+    [3500, '6 value chain activities turn <em>demand into value</em>', () => { setLevel(1); setMode('explore'); selected = 'core'; render(); }],
+    [3500, 'One shared <em>AI layer</em> powers them all', pick('core')],
+    [2600, '<em>Engage:</em> virtual agents answer 24/7', () => { setLevel(2); pick('engage')(); }],
+    [2600, '<em>Plan:</em> forecasts demand and cost', pick('plan')],
+    [2600, '<em>Improve:</em> finds root causes in repeat incidents', pick('improve')],
+    [2600, '<em>Design &amp; Transition:</em> risk-scores every change', pick('design')],
+    [2600, '<em>Obtain / Build:</em> copilots write code and tests', pick('build')],
+    [2600, '<em>Deliver &amp; Support:</em> AIOps cuts the alert noise', pick('deliver')],
+    [2600, 'Turn the AI level up: <em>Assist</em>', () => { setLevel(1); pick('deliver')(); }],
+    [2600, 'Turn the AI level up: <em>Augment</em>', () => { setLevel(2); render(); }],
+    [3000, 'Turn the AI level up: <em>Autonomous</em>. Restore time drops from 4 h to 30 min', () => { setLevel(3); render(); }],
+    [1800, 'Follow one journey: <em>a VPN outage</em>', () => { scen = SCEN[0]; setMode('trace'); }],
+    [2200, 'Follow one journey: <em>a VPN outage</em>', () => go(1)],
+    [2200, 'Follow one journey: <em>a VPN outage</em>', () => go(2)],
+    [2200, 'Follow one journey: <em>a VPN outage</em>', () => go(3)],
+    [2600, 'Follow one journey: <em>a VPN outage</em>', () => go(4)],
+    [4500, '2 days down to 41 min. <em>AI across the whole chain.</em>', () => render()]
+  ];
+  const TOTAL = SCENES.reduce((a, s) => a + s[0], 0);
+  function showCaption() {
+    hint.classList.add('cap');
+    hint.innerHTML = `<span class="auto-chip"><i></i>Auto tour</span> ${caption}`;
+  }
+  function runScene() {
+    if (!autoOn) return;
+    const [d, cap, fn] = SCENES[sceneIdx];
+    caption = cap; fn(); showCaption();
+    const before = SCENES.slice(0, sceneIdx).reduce((a, s) => a + s[0], 0);
+    prog.style.transition = 'none'; prog.style.width = (before / TOTAL * 100) + '%';
+    void prog.offsetWidth;
+    prog.style.transition = `width ${d}ms linear`; prog.style.width = ((before + d) / TOTAL * 100) + '%';
+    sceneTimer = setTimeout(() => { sceneIdx = (sceneIdx + 1) % SCENES.length; runScene(); }, d);
+  }
+  function pauseAuto() {
+    if (autoOn) { autoOn = false; clearTimeout(sceneTimer); hint.classList.remove('cap'); prog.style.transition = 'none'; prog.style.width = '0'; paintMap(); }
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(() => { autoOn = true; sceneIdx = 0; runScene(); }, 25000);
+  }
+  ['pointerdown', 'keydown', 'wheel'].forEach(ev => window.addEventListener(ev, (e) => { if (e.isTrusted) pauseAuto(); }, { capture: true, passive: true }));
+
   render();
+  if (autoOn) runScene();
 })();
 </script>
 </body>
